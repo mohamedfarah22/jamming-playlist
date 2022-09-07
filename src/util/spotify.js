@@ -28,12 +28,14 @@ const Spotify={
 }).then(response => {
         return response.json()
    }).then(jsonResponse => {
+    
     if(!jsonResponse.tracks){
         return [];
     } else{
         return jsonResponse.tracks.items.map(track => ({
             id: track.id, name : track.name, artist: track.artists[0].name, album: track.album.name, uri: track.uri
         }));
+       
     }
 
    });
@@ -45,18 +47,22 @@ async savePlaylist(name, trackUris){
         return;
 
     }
-    const accessToken=Spotify.getAccessToken();
+    let accessToken=Spotify.getAccessToken();
+    
     
     let userId;
-     return fetch(`https://api.spotify.com/v1/me`,{headers: {Authorization: `${accessToken}`}}).then( response => {
-        response.json()
-
-        }).then(jsonResponse => {
+     return fetch(`https://api.spotify.com/v1/me`,{headers: {Authorization: `Bearer ${accessToken}`}}).then((response) =>
+         response.json()
+         ).then( jsonResponse => {
         
-        userId = jsonResponse.id
-        return fetch (`https://api.spotify.com/v1/users/${userId}/playlists`, {headers: {Authorization : `Bearer ${accessToken}`}, method: `POST`, body: JSON.stringify({name: name})}).then(response => {
+        userId = jsonResponse.id;
+        return fetch (`https://api.spotify.com/v1/users/${userId}/playlists`, 
+        {headers: {Authorization : `Bearer ${accessToken}`}, 
+        method: `POST`, 
+        body: JSON.stringify({name: name})
+    })}).then(response => 
            response.json()
-        }).then(jsonResponse =>{
+        ).then(jsonResponse =>{
             const playlistID=jsonResponse.id;
             return fetch(`https://api.spotify.com/v1/playlists/${playlistID}/tracks`, {headers: {Authorization : `Bearer ${accessToken}`}, method: `POST`, body: JSON.stringify({uris: trackUris})})
         }).catch(error =>{
@@ -64,13 +70,32 @@ async savePlaylist(name, trackUris){
 
         })
        
-    });
+    },
 
+    async searchTrackAudio(trackIds){
+        if(!trackIds){
+            return;
+        }
+        const accessToken = Spotify.getAccessToken();
+       let searchTrackIds= trackIds.join(',')
+        return fetch(`https://api.spotify.com/v1/tracks?ids=${searchTrackIds}`,  {headers: {Authorization : `Bearer ${accessToken}`}, method: 'GET'} 
+        ).then( (response) => response.json()
+        ).then(jsonResponse =>{
+            if(!jsonResponse){
+                return "Preview Sound Unavailable"
+            }else{
+                return jsonResponse.tracks.map(track=>({
+                    previewUrl: track.preview_url
+
+                }))
+            }
+        })
+    }
   
     
 
 }
-}
+
 
 
 export default Spotify;

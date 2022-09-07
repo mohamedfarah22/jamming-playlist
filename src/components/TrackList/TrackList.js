@@ -13,7 +13,7 @@ class TrackList extends React.Component{
         }
         return(
             <div className="TrackList" >
-              {myList }
+              {myList}
             </div>
         )
     }
